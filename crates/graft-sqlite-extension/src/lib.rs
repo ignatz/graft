@@ -28,7 +28,7 @@ fn default_data_dir() -> PathBuf {
         .data_dir
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 pub struct ExtensionConfig {
     pub remote: RemoteConfig,
 
