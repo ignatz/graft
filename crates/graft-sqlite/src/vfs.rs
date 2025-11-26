@@ -125,25 +125,25 @@ impl Vfs for GraftVfs {
     }
 
     fn register_logger(&self, logger: SqliteLogger) {
-        #[derive(Clone)]
-        struct Writer(Arc<Mutex<SqliteLogger>>);
-
-        impl std::io::Write for Writer {
-            #[inline]
-            fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
-                self.0.lock().log(SqliteLogLevel::Notice, data);
-                Ok(data.len())
-            }
-
-            #[inline]
-            fn flush(&mut self) -> std::io::Result<()> {
-                Ok(())
-            }
-        }
-
-        let writer = Writer(Arc::new(Mutex::new(logger)));
-        let make_writer = move || writer.clone();
-        graft_tracing::init_tracing_with_writer(TracingConsumer::Tool, make_writer);
+        // #[derive(Clone)]
+        // struct Writer(Arc<Mutex<SqliteLogger>>);
+        //
+        // impl std::io::Write for Writer {
+        //     #[inline]
+        //     fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
+        //         self.0.lock().log(SqliteLogLevel::Notice, data);
+        //         Ok(data.len())
+        //     }
+        //
+        //     #[inline]
+        //     fn flush(&mut self) -> std::io::Result<()> {
+        //         Ok(())
+        //     }
+        // }
+        //
+        // let writer = Writer(Arc::new(Mutex::new(logger)));
+        // let make_writer = move || writer.clone();
+        // graft_tracing::init_tracing_with_writer(TracingConsumer::Tool, make_writer);
     }
 
     fn pragma(
