@@ -55,11 +55,18 @@ pub fn setup_log_file(path: PathBuf) {
     tracing::info!("Log file opened");
 }
 
-pub struct InitErr(pub SqliteErr, pub Cow<'static, str>);
+#[derive(Debug)]
+pub struct InitErr(SqliteErr, Cow<'static, str>);
 
-impl<T: Display> From<T> for InitErr {
-    fn from(err: T) -> Self {
+impl InitErr {
+    pub fn internal(err: impl std::string::ToString) -> Self {
         InitErr(vars::SQLITE_INTERNAL, err.to_string().into())
+    }
+}
+
+impl Display for InitErr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "InitErr({}: {})", self.1, self.0)
     }
 }
 
@@ -108,9 +115,10 @@ fn load_config() -> Result<ExtensionConfig, InitErr> {
                 .prefix_separator("_")
                 .separator("__"),
         )
-        .build()?;
+        .build()
+        .map_err(InitErr::internal)?;
 
-    Ok(config.try_deserialize()?)
+    Ok(config.try_deserialize().map_err(InitErr::internal)?)
 }
 
 pub fn init_vfs(config: ExtensionConfig) -> Result<(RegisterOpts, GraftVfs), InitErr> {
@@ -121,17 +129,19 @@ pub fn init_vfs(config: ExtensionConfig) -> Result<(RegisterOpts, GraftVfs), Ini
     // spin up a tokio current thread runtime in a new thread
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
-        .build()?;
+        .build()
+        .map_err(InitErr::internal)?;
     let tokio_handle = rt.handle().clone();
     std::thread::Builder::new()
         .name("graft-runtime".to_string())
         .spawn(move || {
             // run the tokio event loop in this thread
             rt.block_on(pending::<()>())
-        })?;
+        })
+        .map_err(InitErr::internal)?;
 
-    let remote = Arc::new(config.remote.build()?);
-    let storage = Arc::new(FjallStorage::open(config.data_dir)?);
+    let remote = Arc::new(config.remote.build().map_err(InitErr::internal)?);
+    let storage = Arc::new(FjallStorage::open(config.data_dir).map_err(InitErr::internal)?);
     let autosync = config.autosync.map(|s| Duration::from_secs(s.get()));
     let runtime = Runtime::new(tokio_handle, remote, storage, autosync);
 
