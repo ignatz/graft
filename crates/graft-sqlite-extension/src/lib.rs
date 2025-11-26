@@ -11,9 +11,7 @@ use std::{
 };
 
 use config::{Config, FileFormat};
-use graft_kernel::{
-    local::fjall_storage::FjallStorage, remote::RemoteConfig, rt::runtime::Runtime,
-};
+use graft_kernel::{local::fjall_storage::FjallStorage, rt::runtime::Runtime};
 use graft_sqlite::vfs::GraftVfs;
 use graft_tracing::{TracingConsumer, init_tracing_with_writer};
 use serde::Deserialize;
@@ -21,6 +19,8 @@ use sqlite_plugin::{
     vars,
     vfs::{RegisterOpts, SqliteErr},
 };
+
+pub use graft_kernel::remote::RemoteConfig;
 
 fn default_data_dir() -> PathBuf {
     platform_dirs::AppDirs::new(Some("graft"), true)
@@ -37,6 +37,7 @@ pub struct ExtensionConfig {
 
     pub log_file: Option<PathBuf>,
 
+    #[serde(default)]
     pub make_default: bool,
 
     /// if set, specifies the autosync interval in seconds
